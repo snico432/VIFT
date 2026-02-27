@@ -42,6 +42,9 @@ tester:
   v_f_len: 512
   i_f_len: 256
   use_history_in_eval: True
+  eval_dropout_mode: null  # set to 'visual' or 'imu' for eval ablation
+  eval_dropout_prob: 0.0   # 1.0 = always zero that modality
+  eval_dropout_rate_equal: true  # scale IMU dropout by 1/10 so same prob ≈ comparable impact (IMU 100Hz vs cam 10Hz)
 
 # compile model for faster training with pytorch 2.0
 compile: false

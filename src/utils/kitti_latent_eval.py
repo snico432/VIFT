@@ -1,5 +1,6 @@
 # import dependencies
 import os
+import random
 from tqdm import tqdm
 import numpy as np
 
@@ -24,8 +25,14 @@ class WrapperModel(torch.nn.Module):
         return memory
 
 
+# IMU is 100 Hz, camera 10 Hz → ~10x more IMU samples per window. So the same
+# per-window dropout prob removes ~10x more IMU "content" than visual. Rate-equalized
+# IMU dropout scales prob by 1/IMU_TO_VISUAL_RATE for comparable ablation.
+IMU_TO_VISUAL_RATE = 10
+
+
 class KITTI_tester_latent():
-    def __init__(self, args, wrapper_weights_path, use_history_in_eval=False):
+    def __init__(self, args, wrapper_weights_path, use_history_in_eval=False, eval_dropout_mode=None, eval_dropout_prob=0.0, eval_dropout_rate_equal=True):
         super(KITTI_tester_latent, self).__init__()
         
         # generate data loader for each path
@@ -40,6 +47,19 @@ class KITTI_tester_latent():
         self.wrapper_model.eval()
         self.wrapper_model.to(self.args.device)
         self.use_history_in_eval = use_history_in_eval
+        self.eval_dropout_mode = eval_dropout_mode.lower() if isinstance(eval_dropout_mode, str) else None
+        self.eval_dropout_prob = eval_dropout_prob
+        self.eval_dropout_rate_equal = eval_dropout_rate_equal
+        if self.eval_dropout_mode is not None:
+            assert self.eval_dropout_mode in ("visual", "imu")
+            assert 0.0 <= self.eval_dropout_prob <= 1.0
+            # For IMU, per-window dropout removes ~10x more raw measurements than visual; optionally scale prob for comparable ablation
+            self._effective_dropout_prob = self.eval_dropout_prob
+            if self.eval_dropout_mode == "imu" and self.eval_dropout_rate_equal:
+                self._effective_dropout_prob = self.eval_dropout_prob / IMU_TO_VISUAL_RATE
+                print(f"Eval dropout: mode={self.eval_dropout_mode}, prob={self.eval_dropout_prob} (rate-equalized → effective {self._effective_dropout_prob:.3f})")
+            else:
+                print(f"Eval dropout: mode={self.eval_dropout_mode}, prob={self.eval_dropout_prob}")
 
     def load_wrapper_weights(self, weights_path):
         if os.path.exists(weights_path):
@@ -66,6 +86,15 @@ class KITTI_tester_latent():
             with torch.inference_mode():
                 # Generate latent representations
                 latents = self.wrapper_model(x_in, i_in)
+                # Optionally zero out visual or IMU for eval ablation (uses rate-equalized prob for IMU when enabled)
+                drop_prob = getattr(self, "_effective_dropout_prob", self.eval_dropout_prob)
+                if random.random() < drop_prob:
+                    latents = latents.clone()
+                    v_f_len, i_f_len = self.args.v_f_len, self.args.i_f_len
+                    if self.eval_dropout_mode == "visual":
+                        latents[..., :v_f_len] = 0.0
+                    else:
+                        latents[..., v_f_len:] = 0.0
                 # accumulate poses by passing latents to the main model
 
                 if (self.hist is not None) and self.use_history_in_eval:

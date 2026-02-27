@@ -1,0 +1,27 @@
+# Data and logs
+data/
+logs/
+pretrained_models/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment and IDE
+.env
+.venv/
+venv/
+.idea/
+.vscode/
+*.swp
+*~
+
+# Optional: uncomment if you don't want to track large pretrained weights
+# pretrained_models/

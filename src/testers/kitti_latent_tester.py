@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import os
 
 class KITTILatentTester(BaseTester):
-    def __init__(self, val_seqs, data_dir, seq_len, folder, img_w, img_h, wrapper_weights_path, device, v_f_len, i_f_len, use_history_in_eval=False):
+    def __init__(self, val_seqs, data_dir, seq_len, folder, img_w, img_h, wrapper_weights_path, device, v_f_len, i_f_len, use_history_in_eval=False, eval_dropout_mode=None, eval_dropout_prob=0.0, eval_dropout_rate_equal=True):
         super().__init__()
         self.val_seq = val_seqs
         self.data_dir = data_dir
@@ -37,7 +37,14 @@ class KITTILatentTester(BaseTester):
 
         self.args = Args(self.val_seq, self.data_dir, self.seq_len, self.folder, self.img_w, self.img_h, self.device, self.v_f_len, self.i_f_len, 0.1)
 
-        self.kitti_latent_tester = KITTI_tester_latent(self.args, self.wrapper_weights_path, use_history_in_eval=use_history_in_eval)
+        self.kitti_latent_tester = KITTI_tester_latent(
+            self.args,
+            self.wrapper_weights_path,
+            use_history_in_eval=use_history_in_eval,
+            eval_dropout_mode=eval_dropout_mode,
+            eval_dropout_prob=eval_dropout_prob,
+            eval_dropout_rate_equal=eval_dropout_rate_equal,
+        )
     
     def test(self, model: torch.nn.Module) -> Dict[str, Any]:
         results = {}
