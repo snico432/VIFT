@@ -1,0 +1,8 @@
+# CSV logger for eval: metrics to CSV, flat layout (run_dir/version_0/).
+# No TensorBoard; no "csv" subdir.
+
+csv:
+  _target_: lightning.pytorch.loggers.csv_logs.CSVLogger
+  save_dir: "${paths.output_dir}"
+  name: null  # logs go to save_dir/version_0/ (no extra subdir)
+  prefix: ""
