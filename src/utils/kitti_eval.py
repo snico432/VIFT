@@ -181,7 +181,7 @@ def plotPath_2D(seq, poses_gt_mat, poses_est_mat, plot_path_dir, speed, window_s
     y_pred = np.asarray([pose[1, 3] for pose in poses_est_mat])
     z_pred = np.asarray([pose[2, 3] for pose in poses_est_mat])
 
-    # Plot 2d trajectory estimation map
+    # Plot 2d trajectory estimation map (same convention as scripts/plot_eval_trajectories.py)
     fig = plt.figure(figsize=(6, 6), dpi=100)
     ax = plt.gca()
     plt.plot(x_gt, z_gt, style_gt, label=plot_keys[0])
@@ -190,7 +190,7 @@ def plotPath_2D(seq, poses_gt_mat, poses_est_mat, plot_path_dir, speed, window_s
     plt.legend(loc="upper right", prop={'size': fontsize_})
     plt.xlabel('x (m)', fontsize=fontsize_)
     plt.ylabel('z (m)', fontsize=fontsize_)
-    # set the range of x and y
+    # set the range of x and y; equal aspect for consistency with plot_eval_trajectories
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     xmean = np.mean(xlim)
@@ -201,6 +201,8 @@ def plotPath_2D(seq, poses_gt_mat, poses_est_mat, plot_path_dir, speed, window_s
                        for lim in lims])
     ax.set_xlim([xmean - plot_radius, xmean + plot_radius])
     ax.set_ylim([ymean - plot_radius, ymean + plot_radius])
+    ax.set_aspect("equal")
+    ax.grid(True, alpha=0.3)
 
     plt.title('2D path')
     png_title = "{}_path_2d".format(seq)

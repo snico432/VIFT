@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import os
 
 class KITTILatentTester(BaseTester):
-    def __init__(self, val_seqs, data_dir, seq_len, folder, img_w, img_h, wrapper_weights_path, device, v_f_len, i_f_len, use_history_in_eval=False, eval_dropout_mode=None, eval_dropout_prob=0.0, eval_dropout_rate_equal=True):
+    def __init__(self, val_seqs, data_dir, seq_len, folder, img_w, img_h, wrapper_weights_path, device, v_f_len, i_f_len, use_history_in_eval=False, eval_dropout_mode=None, eval_dropout_prob=0.0, eval_dropout_rate_equal=True, eval_dropout_style="zero", eval_dropout_scale=0.1, eval_dropout_noise_std=1.0):
         super().__init__()
         self.val_seq = val_seqs
         self.data_dir = data_dir
@@ -44,6 +44,9 @@ class KITTILatentTester(BaseTester):
             eval_dropout_mode=eval_dropout_mode,
             eval_dropout_prob=eval_dropout_prob,
             eval_dropout_rate_equal=eval_dropout_rate_equal,
+            eval_dropout_style=eval_dropout_style,
+            eval_dropout_scale=eval_dropout_scale,
+            eval_dropout_noise_std=eval_dropout_noise_std,
         )
     
     def test(self, model: torch.nn.Module) -> Dict[str, Any]:

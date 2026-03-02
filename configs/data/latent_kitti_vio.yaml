@@ -1,3 +1,5 @@
+# If you set root_dir to a fixed path (e.g. /data/kitti_latent_data/train_10), you no longer
+# need to override data.train_loader.root_dir (etc.) on the command line.
 _target_: src.data.vio_datamodule.VIODataModule
 batch_size: 4 # Needs to be divisible by the number of devices (e.g., if in a distributed setup)
 num_workers: 0
@@ -5,12 +7,12 @@ pin_memory: False
 train_loader:
   _target_: src.data.components.latent_kitti_dataset.LatentVectorDataset
   _partial_: false
-  root_dir: ${paths.data_dir}/kitti_latent_data/train_64
+  root_dir: ${paths.data_dir}/kitti_latent_data/train_10
 val_loader:
   _target_: src.data.components.latent_kitti_dataset.LatentVectorDataset
   _partial_: false
-  root_dir: ${paths.data_dir}/kitti_latent_data/val_64
+  root_dir: ${paths.data_dir}/kitti_latent_data/val_10
 test_loader: 
   _target_: src.data.components.latent_kitti_dataset.LatentVectorDataset
   _partial_: false
-  root_dir: ${paths.data_dir}/kitti_latent_data/val_64
+  root_dir: ${paths.data_dir}/kitti_latent_data/val_10

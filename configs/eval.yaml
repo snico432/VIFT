@@ -4,7 +4,7 @@ defaults:
   - _self_
   - data: latent_kitti_vio # choose datamodule with `test_dataloader()` for evaluation
   - model: weighted_latent_vio_tf
-  - logger: null
+  - logger: csv_eval  # metrics to run_dir/version_0/metrics.csv; no TensorBoard
   - paths: default
   - extras: default
   - hydra: default

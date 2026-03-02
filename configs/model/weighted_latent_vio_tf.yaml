@@ -43,8 +43,11 @@ tester:
   i_f_len: 256
   use_history_in_eval: True
   eval_dropout_mode: null  # set to 'visual' or 'imu' for eval ablation
-  eval_dropout_prob: 0.0   # 1.0 = always zero that modality
+  eval_dropout_prob: 0.0   # 1.0 = always apply degradation to that modality
   eval_dropout_rate_equal: true  # scale IMU dropout by 1/10 so same prob ≈ comparable impact (IMU 100Hz vs cam 10Hz)
+  eval_dropout_style: zero  # zero | scale | noise (softer than zero: scale multiplies, noise adds Gaussian)
+  eval_dropout_scale: 0.1  # when style=scale: multiply latents by this factor (e.g. 0.1 = 10% signal)
+  eval_dropout_noise_std: 1.0  # when style=noise: scale of added noise (relative to latent std)
 
 # compile model for faster training with pytorch 2.0
 compile: false

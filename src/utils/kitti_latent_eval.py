@@ -31,8 +31,14 @@ class WrapperModel(torch.nn.Module):
 IMU_TO_VISUAL_RATE = 10
 
 
+# Eval dropout style: "zero" = zero out; "scale" = multiply by scale factor; "noise" = add Gaussian noise (softer than zero).
+EVAL_DROPOUT_STYLE_ZERO = "zero"
+EVAL_DROPOUT_STYLE_SCALE = "scale"
+EVAL_DROPOUT_STYLE_NOISE = "noise"
+
+
 class KITTI_tester_latent():
-    def __init__(self, args, wrapper_weights_path, use_history_in_eval=False, eval_dropout_mode=None, eval_dropout_prob=0.0, eval_dropout_rate_equal=True):
+    def __init__(self, args, wrapper_weights_path, use_history_in_eval=False, eval_dropout_mode=None, eval_dropout_prob=0.0, eval_dropout_rate_equal=True, eval_dropout_style="zero", eval_dropout_scale=0.1, eval_dropout_noise_std=1.0):
         super(KITTI_tester_latent, self).__init__()
         
         # generate data loader for each path
@@ -50,16 +56,20 @@ class KITTI_tester_latent():
         self.eval_dropout_mode = eval_dropout_mode.lower() if isinstance(eval_dropout_mode, str) else None
         self.eval_dropout_prob = eval_dropout_prob
         self.eval_dropout_rate_equal = eval_dropout_rate_equal
+        self.eval_dropout_style = (eval_dropout_style or EVAL_DROPOUT_STYLE_ZERO).lower()
+        self.eval_dropout_scale = eval_dropout_scale
+        self.eval_dropout_noise_std = eval_dropout_noise_std
         if self.eval_dropout_mode is not None:
             assert self.eval_dropout_mode in ("visual", "imu")
             assert 0.0 <= self.eval_dropout_prob <= 1.0
+            assert self.eval_dropout_style in (EVAL_DROPOUT_STYLE_ZERO, EVAL_DROPOUT_STYLE_SCALE, EVAL_DROPOUT_STYLE_NOISE)
             # For IMU, per-window dropout removes ~10x more raw measurements than visual; optionally scale prob for comparable ablation
             self._effective_dropout_prob = self.eval_dropout_prob
             if self.eval_dropout_mode == "imu" and self.eval_dropout_rate_equal:
                 self._effective_dropout_prob = self.eval_dropout_prob / IMU_TO_VISUAL_RATE
-                print(f"Eval dropout: mode={self.eval_dropout_mode}, prob={self.eval_dropout_prob} (rate-equalized → effective {self._effective_dropout_prob:.3f})")
+                print(f"Eval dropout: mode={self.eval_dropout_mode}, prob={self.eval_dropout_prob} (rate-equalized → effective {self._effective_dropout_prob:.3f}), style={self.eval_dropout_style}")
             else:
-                print(f"Eval dropout: mode={self.eval_dropout_mode}, prob={self.eval_dropout_prob}")
+                print(f"Eval dropout: mode={self.eval_dropout_mode}, prob={self.eval_dropout_prob}, style={self.eval_dropout_style}")
 
     def load_wrapper_weights(self, weights_path):
         if os.path.exists(weights_path):
@@ -86,15 +96,22 @@ class KITTI_tester_latent():
             with torch.inference_mode():
                 # Generate latent representations
                 latents = self.wrapper_model(x_in, i_in)
-                # Optionally zero out visual or IMU for eval ablation (uses rate-equalized prob for IMU when enabled)
+                # Optionally degrade visual or IMU for eval ablation (zero / scale / noise; uses rate-equalized prob for IMU when enabled)
                 drop_prob = getattr(self, "_effective_dropout_prob", self.eval_dropout_prob)
                 if random.random() < drop_prob:
                     latents = latents.clone()
-                    v_f_len, i_f_len = self.args.v_f_len, self.args.i_f_len
+                    v_f_len = self.args.v_f_len
                     if self.eval_dropout_mode == "visual":
-                        latents[..., :v_f_len] = 0.0
+                        slc = latents[..., :v_f_len]
                     else:
-                        latents[..., v_f_len:] = 0.0
+                        slc = latents[..., v_f_len:]
+                    if self.eval_dropout_style == EVAL_DROPOUT_STYLE_ZERO:
+                        slc.zero_()
+                    elif self.eval_dropout_style == EVAL_DROPOUT_STYLE_SCALE:
+                        slc.mul_(self.eval_dropout_scale)
+                    else:  # EVAL_DROPOUT_STYLE_NOISE
+                        noise_std = self.eval_dropout_noise_std * slc.std().item() if slc.numel() > 0 else self.eval_dropout_noise_std
+                        slc.add_(torch.randn_like(slc, device=slc.device, dtype=slc.dtype) * noise_std)
                 # accumulate poses by passing latents to the main model
 
                 if (self.hist is not None) and self.use_history_in_eval:

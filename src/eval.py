@@ -1,4 +1,8 @@
 import functools
+import subprocess
+import sys
+from pathlib import Path
+
 import torch
 torch.serialization.add_safe_globals([
     functools.partial,
@@ -96,6 +100,35 @@ def evaluate(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
     log.info("Starting testing!")
     trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
+
+    # Auto-plot trajectories in the same directory where eval results were written
+    logger = trainer.logger
+    if isinstance(logger, list) and logger:
+        logger = logger[0]
+    if logger is not None and getattr(logger, "log_dir", None):
+        log_dir = Path(logger.log_dir)
+        # Poses and .npy files are written to log_dir (works with any logger: tensorboard, csv, etc.)
+        # run_root = Hydra output dir, e.g. .../runs/2026-02-27_06-45-00
+        # For csv_eval: log_dir = run_root/version_0  => run_root = log_dir.parent
+        # For tensorboard: log_dir = run_root/tensorboard/version_0  => run_root = log_dir.parent.parent
+        run_root = log_dir.parent.parent if log_dir.parent.name in ("tensorboard", "csv") else log_dir.parent
+        if log_dir.is_dir():
+            script_path = Path(__file__).resolve().parent.parent / "scripts" / "plot_eval_trajectories.py"
+            if script_path.is_file():
+                log.info("Plotting trajectories into %s", run_root)
+                subprocess.run(
+                    [
+                        sys.executable, str(script_path), str(run_root),
+                        "--poses-dir", str(log_dir),
+                        "-o", str(run_root / "trajectories.png"),
+                    ],
+                    cwd=Path(__file__).resolve().parent.parent,
+                    check=False,
+                )
+            else:
+                log.debug("Plot script not found at %s", script_path)
+        else:
+            log.debug("Log dir not found at %s, skipping trajectory plot", log_dir)
 
     # for predictions use trainer.predict(...)
     # predictions = trainer.predict(model=model, dataloaders=dataloaders, ckpt_path=cfg.ckpt_path)
