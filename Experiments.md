@@ -51,6 +51,9 @@ python scripts/plot_eval_trajectories.py logs/eval/runs/RUN_ID
 # Custom output path and/or label
 python scripts/plot_eval_trajectories.py logs/eval/runs/RUN_ID \
   -o trajectories_visual_dropout.png -m "VIFT (no visual)"
+```
 
-
-  VIFT/logs/eval/runs/2026-03-02_04-05-38
+### Investigate projection weights
+```bash
+python scripts/investigate_projection_weights.py --ckpt "logs/train/runs/2026-02-15_23-50-17/checkpoints/epoch_145.ckpt" --output report.txt --plot
+```

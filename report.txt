@@ -1,0 +1,26 @@
+Linear projection fc1: weight shape (embedding_dim, input_dim) = (768, 768)
+Visual slice: cols [0:512], IMU slice: cols [512:768]
+
+Total Frobenius norms (raw):
+  Visual block: 13.290714
+  IMU block:   10.849047
+  Ratio (visual/IMU): 1.2251
+
+Total Frobenius norms (normalized by sqrt(n_weights), comparable across modalities):
+  Visual block: 0.021195
+  IMU block:   0.024468
+  Ratio (visual/IMU): 0.8662
+
+Per-output norms (mean ± std):
+  Visual: 0.479402 ± 0.013356
+  IMU:    0.389444 ± 0.039915
+
+Per-input norms (which latent dims are used most):
+  Visual: mean 0.586733, max 0.954063
+  IMU:    mean 0.658153, max 1.487636
+
+Contribution norms on data (mean ||Wv xv||, mean ||Wi xi||):
+  Computed over 50300 positions ((full test set, 50300 positions))
+  Visual: 11.362341
+  IMU:    11.831497
+  Ratio (visual/IMU): 0.9603
