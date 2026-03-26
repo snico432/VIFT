@@ -1,9 +1,16 @@
+import functools
 from typing import Any, Dict, List, Optional, Tuple
 
 import hydra
 import lightning as L
 import rootutils
 import torch
+torch.set_float32_matmul_precision("high")
+torch.serialization.add_safe_globals([
+    functools.partial,
+    torch.optim.AdamW,
+    torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
+])
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
@@ -26,6 +33,12 @@ rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # more info: https://github.com/ashleve/rootutils
 # ------------------------------------------------------------------------------------ #
 
+from src.data.components.latent_kitti_dataset import LatentVectorDataset
+from src.metrics.kitti_metrics_calculator import KITTIMetricsCalculator
+from src.metrics.weighted_loss import RPMGPoseLoss
+from src.models.components.pose_transformer import PoseTransformer, IMUToVisualCrossAttnPoseTransformer
+from src.models.weighted_vio_module import WeightedVIOLitModule
+from src.testers.kitti_latent_tester import KITTILatentTester
 from src.utils import (
     RankedLogger,
     extras,
@@ -35,6 +48,15 @@ from src.utils import (
     log_hyperparameters,
     task_wrapper,
 )
+torch.serialization.add_safe_globals([
+    RPMGPoseLoss,
+    KITTIMetricsCalculator,
+    LatentVectorDataset,
+    PoseTransformer,
+    IMUToVisualCrossAttnPoseTransformer,
+    WeightedVIOLitModule,
+    KITTILatentTester,
+])
 
 log = RankedLogger(__name__, rank_zero_only=True)
 

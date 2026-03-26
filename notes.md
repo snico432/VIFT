@@ -1,0 +1,2 @@
+1. The asymeetric cross-attnetion is working really well for roation, but the lack of temporal attention across the visual frames is probably resulting in the higher translation error. This suggests we should try the joint-attention mechanism, so that Visual can query IMU and also attend temporally, and the same for IMU.
+Summary: Use joint attention or symmetric cross-attention.

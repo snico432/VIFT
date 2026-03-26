@@ -57,3 +57,8 @@ python scripts/plot_eval_trajectories.py logs/eval/runs/RUN_ID \
 ```bash
 python scripts/investigate_projection_weights.py --ckpt "logs/train/runs/2026-02-15_23-50-17/checkpoints/epoch_145.ckpt" --output report.txt --plot
 ```
+
+
+Increase num_workers and batch_size for training and evaluation.
+
+python scripts/plot_eval_trajectories.py /lambda/nfs/cis-4910/VIFT/logs/eval/runs/2026-03-26_00-10-00 -m "Cross-Attn FFN=1024"
