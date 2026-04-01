@@ -24,7 +24,7 @@ rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 from src.metrics.weighted_loss import RPMGPoseLoss
 from src.metrics.kitti_metrics_calculator import KITTIMetricsCalculator
 from src.data.components.latent_kitti_dataset import LatentVectorDataset
-from src.models.components.pose_transformer import PoseTransformer, IMUToVisualCrossAttnPoseTransformer
+from src.models.components.pose_transformer import PoseTransformer, IMUToVisualCrossAttnPoseTransformer, VisualContextCrossAttnPoseTransformer
 from src.models.weighted_vio_module import WeightedVIOLitModule
 from src.testers.kitti_latent_tester import KITTILatentTester
 torch.serialization.add_safe_globals([
@@ -33,6 +33,7 @@ torch.serialization.add_safe_globals([
     LatentVectorDataset,
     PoseTransformer,
     IMUToVisualCrossAttnPoseTransformer,
+    VisualContextCrossAttnPoseTransformer,
     WeightedVIOLitModule,
     KITTILatentTester,
 ])

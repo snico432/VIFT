@@ -52,6 +52,8 @@ class RPMGPoseLoss(nn.Module):
         translation_loss = torch.nn.functional.l1_loss(poses[:,:,3:], gts[:, :, 3:])
         
         pose_loss = self.angle_weight * angle_loss + translation_loss
+        self._last_angle_loss = angle_loss.detach()
+        self._last_translation_loss = translation_loss.detach()
         return pose_loss
 
 class DataWeightedRPMGPoseLoss(nn.Module):
