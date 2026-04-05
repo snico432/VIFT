@@ -1,4 +1,9 @@
 # --------- pytorch --------- #
+# Install a CUDA build that matches the host NVIDIA driver (see `nvidia-smi` "CUDA Version").
+# Example for CUDA 12.x drivers (e.g. Lambda when smi shows 12.8): install from PyTorch wheels
+# before `pip install -r requirements.txt`, or in one line:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# Plain `pip install torch` may resolve to a newer CUDA wheel (e.g. +cu130) than the driver supports.
 torch>=2.0.0
 torchvision>=0.15.0
 lightning>=2.0.0
