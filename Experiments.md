@@ -62,3 +62,8 @@ python scripts/investigate_projection_weights.py --ckpt "logs/train/runs/2026-02
 Increase num_workers and batch_size for training and evaluation.
 
 python scripts/plot_eval_trajectories.py /lambda/nfs/cis-4910/VIFT/logs/eval/runs/2026-03-26_00-10-00 -m "Cross-Attn FFN=1024"
+
+
+python src/train.py experiment=cross_attn_latent_larger_FFN trainer=gpu logger=many_loggersmodel.criterion.angle_weight=25 tags=['cross_attn', 'FFN=1024', 'alpha=25'] 
+
+python src/train.py experiment=cross_attn_ffn_dropout trainer=gpu logger=many_loggers tags="[cross_attn, ffn_1024, dropout_0.05]"

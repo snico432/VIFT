@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 import hydra
+import json
 
 class WeightedVIOLitModule(LightningModule):
     def __init__(
@@ -102,6 +103,26 @@ class WeightedVIOLitModule(LightningModule):
                     ],
                     check=False,
                 )
+            summary_metrics = {
+                f"test/{name}": value
+                for name, value in metrics.items()
+                if name in {
+                    "05_r_rel",
+                    "05_t_rel",
+                    "05_r_rmse",
+                    "05_t_rmse",
+                    "07_r_rel",
+                    "07_t_rel",
+                    "07_r_rmse",
+                    "07_t_rmse",
+                    "10_r_rel",
+                    "10_t_rel",
+                    "10_r_rmse",
+                    "10_t_rmse",
+                }
+            }
+            with open(log_dir / "summary_metrics.json", "w") as f:
+                json.dump(summary_metrics, f)
 
     def setup(self, stage):
         """Lightning hook that is called at the beginning of fit (train + validate), validate,
