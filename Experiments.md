@@ -66,4 +66,4 @@ python scripts/plot_eval_trajectories.py /lambda/nfs/cis-4910/VIFT/logs/eval/run
 
 python src/train.py experiment=cross_attn_latent_larger_FFN trainer=gpu logger=many_loggersmodel.criterion.angle_weight=25 tags=['cross_attn', 'FFN=1024', 'alpha=25'] 
 
-python src/train.py experiment=cross_attn_ffn_dropout trainer=gpu logger=many_loggers tags="[cross_attn, ffn_1024, dropout_0.05]"
+python src/train.py experiment=cross_attn_ffn_dropout_alpha trainer=gpu logger=many_loggers tags="[cross_attn, ffn_1024, dropout_0.05, alpha_20]"

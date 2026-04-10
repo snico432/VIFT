@@ -91,6 +91,7 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
         attn_dropout=0.1,
         residual_dropout=0.1,
         ffn_dropout=0.1,
+        return_attention_weights=False,
     ):
         super().__init__()
 
@@ -98,6 +99,8 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
             raise ValueError(
                 f"Expected input_dim={input_dim} to equal v_f_len+i_f_len={v_f_len+i_f_len}."
             )
+
+        self.return_attention_weights = return_attention_weights
 
         self.v_f_len = v_f_len
         self.i_f_len = i_f_len
@@ -189,30 +192,42 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
             seq_length, device=visual.device, dtype=visual.dtype
         )
 
+        need_w = self.return_attention_weights
+        cross_weights_list = []
+        self_weights_list = []
+
         for layer in self.layers:
-            cross_attn_out, _ = layer["cross_attn"](
+            cross_attn_out, cross_w = layer["cross_attn"](
                 query=imu,
                 key=visual,
                 value=visual,
                 attn_mask=attn_mask,
-                need_weights=False,
+                need_weights=need_w,
+                average_attn_weights=True,
             )
             imu = layer["ln1"](imu + self.residual_dropout(cross_attn_out))
 
-            self_attn_out, _ = layer["self_attn"](
+            self_attn_out, self_w = layer["self_attn"](
                 query=imu,
                 key=imu,
                 value=imu,
                 attn_mask=attn_mask,
-                need_weights=False,
+                need_weights=need_w,
+                average_attn_weights=True,
             )
             imu = layer["ln2"](imu + self.residual_dropout(self_attn_out))
 
             ffn_out = layer["ffn"](imu)
             imu = layer["ln3"](imu + self.residual_dropout(ffn_out))
 
-        # (B, S, 6)
-        return self.fc2(imu)
+            if need_w:
+                cross_weights_list.append(cross_w)
+                self_weights_list.append(self_w)
+
+        out = self.fc2(imu)
+        if need_w:
+            return out, {"cross_attn": cross_weights_list, "self_attn": self_weights_list}
+        return out
 
 
 class CrossAttnPoseTransformer(nn.Module):
