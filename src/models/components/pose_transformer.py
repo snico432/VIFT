@@ -88,7 +88,9 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
         num_layers=2,
         nhead=8,
         dim_feedforward=512,
-        dropout=0.1,
+        attn_dropout=0.1,
+        residual_dropout=0.1,
+        ffn_dropout=0.1,
     ):
         super().__init__()
 
@@ -106,7 +108,7 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
         self.fc_visual = nn.Linear(v_f_len, embedding_dim)
         self.fc_imu = nn.Linear(i_f_len, embedding_dim)
 
-        self.dropout = nn.Dropout(dropout)
+        self.residual_dropout = nn.Dropout(residual_dropout)
         self.layers = nn.ModuleList(
             [
                 nn.ModuleDict(
@@ -114,21 +116,21 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
                         "cross_attn": nn.MultiheadAttention(
                             embed_dim=embedding_dim,
                             num_heads=nhead,
-                            dropout=dropout,
+                            dropout=attn_dropout,
                             batch_first=True,
                         ),
                         "ln1": nn.LayerNorm(embedding_dim),
                         "self_attn": nn.MultiheadAttention(
                             embed_dim=embedding_dim,
                             num_heads=nhead,
-                            dropout=dropout,
+                            dropout=attn_dropout,
                             batch_first=True,
                         ),
                         "ln2": nn.LayerNorm(embedding_dim),
                         "ffn": nn.Sequential(
                             nn.Linear(embedding_dim, dim_feedforward),
                             nn.ReLU(),
-                            nn.Dropout(dropout),
+                            nn.Dropout(ffn_dropout),
                             nn.Linear(dim_feedforward, embedding_dim),
                         ),
                         "ln3": nn.LayerNorm(embedding_dim),
@@ -195,7 +197,7 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
                 attn_mask=attn_mask,
                 need_weights=False,
             )
-            imu = layer["ln1"](imu + self.dropout(cross_attn_out))
+            imu = layer["ln1"](imu + self.residual_dropout(cross_attn_out))
 
             self_attn_out, _ = layer["self_attn"](
                 query=imu,
@@ -204,10 +206,10 @@ class IMUToVisualCrossAttnPoseTransformer(nn.Module):
                 attn_mask=attn_mask,
                 need_weights=False,
             )
-            imu = layer["ln2"](imu + self.dropout(self_attn_out))
+            imu = layer["ln2"](imu + self.residual_dropout(self_attn_out))
 
             ffn_out = layer["ffn"](imu)
-            imu = layer["ln3"](imu + self.dropout(ffn_out))
+            imu = layer["ln3"](imu + self.residual_dropout(ffn_out))
 
         # (B, S, 6)
         return self.fc2(imu)

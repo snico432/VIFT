@@ -28,7 +28,7 @@ data:
     root_dir: ${paths.data_dir}/kitti_latent_data/val_10
 
 model:
-  plot_label: "CA dropout=0.05"
+  plot_label: "CA FFN=1536 dropout=0.05"
   criterion:
     angle_weight: 25
   net:
@@ -36,5 +36,5 @@ model:
     embedding_dim: 512
     num_layers: 4
     nhead: 8
-    dim_feedforward: 1024
+    dim_feedforward: 1536
     ffn_dropout: 0.05
